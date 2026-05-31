@@ -1,0 +1,51 @@
+# ───── Virtual environment ─────
+venv/
+env/
+.venv/
+
+# ───── Environment variables (NEVER commit this) ─────
+.env
+.env.*
+*.env
+
+# ───── Python cache ─────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ───── Django specific ─────
+*.log
+db.sqlite3
+media/
+
+# ───── Static files (collected) ─────
+staticfiles/
+static_root/
+
+# ───── MySQL ─────
+*.sql
+*.dump
+
+# ───── VS Code ─────
+.vscode/
+*.code-workspace
+
+# ───── PyCharm ─────
+.idea/
+
+# ───── OS files ─────
+.DS_Store        # Mac
+Thumbs.db        # Windows
+desktop.ini
+
+# ───── Testing ─────
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ───── Distribution / packaging ─────
+dist/
+build/
+*.egg-info/

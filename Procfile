@@ -1,0 +1,1 @@
+web: gunicorn qasite.wsgi:application

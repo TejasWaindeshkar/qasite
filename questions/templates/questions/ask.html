@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Ask a Question — QASite{% endblock %}
+
+{% block content %}
+<div class="ask-card">
+  <h2>Ask a Question</h2>
+  <p style="color:#666;font-size:14px;margin-bottom:24px">
+    Be specific. Include what you tried and what you expected.
+  </p>
+
+  <form method="POST">
+    {% csrf_token %}
+
+    {% for field in form %}
+      <div class="form-group">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <span class="field-error">{{ field.errors.0 }}</span>
+        {% endif %}
+        {% if field.help_text %}
+          <small class="help-text">{{ field.help_text }}</small>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary" style="width:auto;padding:10px 28px">
+      Post Question
+    </button>
+    <a href="{% url 'question_list' %}" class="btn btn-secondary" style="margin-left:8px">
+      Cancel
+    </a>
+  </form>
+</div>
+{% endblock %}

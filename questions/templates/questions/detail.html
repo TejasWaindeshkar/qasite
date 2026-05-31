@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ question.title }} — QASite{% endblock %}
+
+{% block content %}
+<div class="detail-layout">
+
+  <!-- QUESTION -->
+  <div class="question-detail-card">
+    <h1 class="question-title">{{ question.title }}</h1>
+    <div class="question-meta">
+      Asked by <a href="{% url 'profile' question.author.username %}">{{ question.author.username }}</a>
+      · {{ question.created_at|timesince }} ago
+      · {{ question.answer_count }} answer{{ question.answer_count|pluralize }}
+    </div>
+
+    <div class="vote-body-row">
+      <!-- VOTE BUTTONS -->
+      <div class="vote-col">
+        <button class="vote-btn upvote {% if user_votes.question_question.pk == 1 %}voted{% endif %}"
+          onclick="castVote('question', {{ question.pk }}, 1, this)">▲</button>
+        <span class="vote-score" id="q-score-{{ question.pk }}">{{ question.vote_score }}</span>
+        <button class="vote-btn downvote"
+          onclick="castVote('question', {{ question.pk }}, -1, this)">▼</button>
+      </div>
+      <!-- BODY -->
+      <div class="q-body">{{ question.body|linebreaks }}</div>
+    </div>
+
+    <!-- TAGS -->
+    <div class="q-tags" style="margin-top:16px">
+      {% for tag in question.tags.all %}
+        <a href="/?tag={{ tag.slug }}" class="tag">{{ tag.name }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ANSWERS -->
+  <h2 style="margin:28px 0 16px;font-size:18px">
+    {{ answers|length }} Answer{{ answers|length|pluralize }}
+  </h2>
+
+  {% for answer in answers %}
+  <div class="answer-card {% if answer.is_accepted %}accepted{% endif %}">
+    {% if answer.is_accepted %}
+      <div class="accepted-banner">✓ Accepted Answer</div>
+    {% endif %}
+
+    <div class="vote-body-row">
+      <div class="vote-col">
+        <button class="vote-btn upvote"
+          onclick="castVote('answer', {{ answer.pk }}, 1, this)">▲</button>
+        <span class="vote-score" id="a-score-{{ answer.pk }}">{{ answer.vote_score }}</span>
+        <button class="vote-btn downvote"
+          onclick="castVote('answer', {{ answer.pk }}, -1, this)">▼</button>
+      </div>
+      <div class="q-body">
+        {{ answer.body|linebreaks }}
+        <div class="answer-meta">
+          answered by <a href="{% url 'profile' answer.author.username %}">{{ answer.author.username }}</a>
+          · {{ answer.created_at|timesince }} ago
+        </div>
+        {% if request.user == question.author %}
+          <a href="{% url 'accept_answer' answer.pk %}" class="accept-btn">
+            {% if answer.is_accepted %}✓ Accepted{% else %}Accept this answer{% endif %}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% empty %}
+    <div class="empty-state">
+      <p>No answers yet. Be the first to answer!</p>
+    </div>
+  {% endfor %}
+
+  <!-- POST ANSWER -->
+  {% if user.is_authenticated %}
+  <div class="answer-form-card">
+    <h3>Your Answer</h3>
+    <form method="POST" action="{% url 'post_answer' question.pk %}">
+      {% csrf_token %}
+      {{ form.body }}
+      {% if form.body.errors %}
+        <span class="field-error">{{ form.body.errors.0 }}</span>
+      {% endif %}
+      <button type="submit" class="btn btn-primary" style="width:auto;margin-top:12px;padding:10px 24px">
+        Post Answer
+      </button>
+    </form>
+  </div>
+  {% else %}
+    <div class="empty-state">
+      <p><a href="{% url 'login' %}">Login</a> to post an answer.</p>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- AJAX VOTE SCRIPT -->
+<script>
+function castVote(contentType, objectId, value, btn) {
+  {% if not user.is_authenticated %}
+    window.location.href = "{% url 'login' %}";
+    return;
+  {% endif %}
+
+  fetch(`/vote/${contentType}/${objectId}/${value}/`, {
+    method: 'GET',
+    headers: {'X-Requested-With': 'XMLHttpRequest'}
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.vote_score !== undefined) {
+      const prefix = contentType === 'question' ? 'q' : 'a';
+      document.getElementById(`${prefix}-score-${objectId}`).textContent = data.vote_score;
+      btn.classList.toggle('voted');
+    }
+  })
+  .catch(err => console.error('Vote error:', err));
+}
+</script>
+{% endblock %}

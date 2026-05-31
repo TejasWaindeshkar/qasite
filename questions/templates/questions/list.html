@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Questions — QASite{% endblock %}
+
+{% block content %}
+<div class="page-layout">
+
+  <!-- LEFT: question list -->
+  <div class="main-col">
+    <div class="list-header">
+      <h2>
+        {% if active_tag %}
+          Questions tagged "{{ active_tag.name }}"
+        {% elif query %}
+          Search results for "{{ query }}"
+        {% else %}
+          All Questions
+        {% endif %}
+      </h2>
+      <a href="{% url 'ask_question' %}" class="btn btn-primary" style="width:auto;padding:10px 20px">Ask Question</a>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-bar">
+      <a href="?order=newest{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if order == 'newest' %}active{% endif %}">Newest</a>
+      <a href="?order=votes{% if query %}&q={{ query }}{% endif %}"  class="filter-btn {% if order == 'votes' %}active{% endif %}">Most Voted</a>
+      <a href="?order=unanswered{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if order == 'unanswered' %}active{% endif %}">Unanswered</a>
+    </div>
+
+    <!-- SEARCH -->
+    <form method="GET" class="search-form">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search questions...">
+      <button type="submit" class="btn btn-secondary">Search</button>
+    </form>
+
+    <!-- QUESTION LIST -->
+    {% for q in questions %}
+    <div class="question-card">
+      <div class="q-stats">
+        <div class="stat">
+          <span class="stat-num">{{ q.vote_score }}</span>
+          <span class="stat-label">votes</span>
+        </div>
+        <div class="stat {% if q.answer_count > 0 %}answered{% endif %}">
+          <span class="stat-num">{{ q.answer_count }}</span>
+          <span class="stat-label">answers</span>
+        </div>
+      </div>
+      <div class="q-content">
+        <a href="{% url 'question_detail' q.pk %}" class="q-title">{{ q.title }}</a>
+        <p class="q-excerpt">{{ q.body|truncatechars:120 }}</p>
+        <div class="q-meta">
+          <div class="q-tags">
+            {% for tag in q.tags.all %}
+              <a href="?tag={{ tag.slug }}" class="tag">{{ tag.name }}</a>
+            {% endfor %}
+          </div>
+          <span class="q-author">
+            asked by <a href="{% url 'profile' q.author.username %}">{{ q.author.username }}</a>
+            · {{ q.created_at|timesince }} ago
+          </span>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+      <div class="empty-state">
+        <p>No questions found.</p>
+        <a href="{% url 'ask_question' %}" class="btn btn-primary" style="width:auto;margin-top:12px">Ask the first question!</a>
+      </div>
+    {% endfor %}
+
+    <!-- ✅ PAGINATION — added right here after endfor -->
+    {% if questions.has_other_pages %}
+    <div class="pagination">
+      {% if questions.has_previous %}
+        <a href="?page={{ questions.previous_page_number }}&order={{ order }}{% if query %}&q={{ query }}{% endif %}{% if active_tag %}&tag={{ active_tag.slug }}{% endif %}" class="page-btn">← Prev</a>
+      {% endif %}
+
+      {% for num in questions.paginator.page_range %}
+        {% if questions.number == num %}
+          <span class="page-btn active">{{ num }}</span>
+        {% elif num > questions.number|add:'-3' and num < questions.number|add:'3' %}
+          <a href="?page={{ num }}&order={{ order }}{% if query %}&q={{ query }}{% endif %}{% if active_tag %}&tag={{ active_tag.slug }}{% endif %}" class="page-btn">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if questions.has_next %}
+        <a href="?page={{ questions.next_page_number }}&order={{ order }}{% if query %}&q={{ query }}{% endif %}{% if active_tag %}&tag={{ active_tag.slug }}{% endif %}" class="page-btn">Next →</a>
+      {% endif %}
+    </div>
+    {% endif %}
+    <!-- ✅ END PAGINATION -->
+
+  </div>
+  <!-- end of main-col ↑ -->
+
+  <!-- RIGHT: sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-box">
+      <h3>Popular Tags</h3>
+      <div class="tag-cloud">
+        {% for tag in popular_tags %}
+          <a href="?tag={{ tag.slug }}" class="tag">{{ tag.name }} <span class="tag-count">{{ tag.usage_count }}</span></a>
+        {% empty %}
+          <p style="color:#aaa;font-size:13px">No tags yet</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
